@@ -5,6 +5,7 @@ const {
   existingUser,
   saveNewUser,
   loginResponse,
+  findUserByIdAndToken,
 } = require("../service/index");
 const { validateUser } = require("../service/validator");
 
@@ -34,12 +35,12 @@ const signup = async (req, res, next) => {
     });
   } catch (e) {
     res.status(404).json({ message: "Not found" });
-    next(e);
   }
 };
 
 const login = async (req, res, next) => {
-  const { error, email, password } = validateUser(req.body);
+  const { error, value } = validateUser(req.body);
+  const { email, password } = value;
 
   try {
     if (error) {
@@ -47,7 +48,9 @@ const login = async (req, res, next) => {
     }
 
     const user = await service.existingUser({ email });
-    if (!user || !user.validPassword(password)) {
+
+    const hash = await bcrypt.hash(password, 10);
+    if (!user || (await bcrypt.compare(hash, user.password))) {
       return res.status(401).json({ message: "Email or password is wrong" });
     }
 
@@ -61,11 +64,69 @@ const login = async (req, res, next) => {
     return loginResponse(res, token, user.email, user.subscription);
   } catch (e) {
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const auth = async (req, res, next) => {
+  const token = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  const user = await findUserByIdAndToken(decoded.userId, token);
+  try {
+    if (!user) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    req.user = user;
+    req.token = token;
+    next();
+  } catch (e) {
+    return res.status(401).json({ message: "Not autorized" });
+  }
+};
+
+const logout = async (res, req, next) => {
+  const userId = req.user.id;
+  const user = await service.findUserById(userId);
+
+  try {
+    if (!user) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    user.token = [];
+    await user.save();
+
+    res.status(204).send();
+  } catch (e) {
+    console.error(e);
+    res.status(500).send();
     next(e);
+  }
+};
+
+const current = async (res, req, next) => {
+  const userId = req.user.id;
+  const user = await service.findUserById(userId);
+
+  try {
+    if (!user) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    res.status(200).json({
+      email: user.email,
+      subscription: user.subsctiption,
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
 module.exports = {
   signup,
   login,
+  auth,
+  logout,
+  current,
 };

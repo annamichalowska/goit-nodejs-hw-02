@@ -51,6 +51,16 @@ const loginResponse = (res, token, email, subscription) => {
   });
 };
 
+const findUserByIdAndToken = async (userId, token) => {
+  const user = await User.findOne({ _id: userId, token: token });
+  return user;
+};
+
+const findUserById = async (userId) => {
+  const user = await User.findById({ _id: userId });
+  return user;
+}
+
 module.exports = {
   getAllContacts,
   getContactById,
@@ -61,4 +71,6 @@ module.exports = {
   existingUser,
   saveNewUser,
   loginResponse,
+  findUserByIdAndToken,
+  findUserById,
 };
