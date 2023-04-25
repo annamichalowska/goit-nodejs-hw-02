@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const ctrUser = require("../../models/users");
-const auth = require("../../models/users");
+const { auth } = require("../../models/users");
 
 router.post("/singup", ctrUser.signup);
 
-router.post("/login", auth, ctrUser.login);
+router.post("/login", ctrUser.login);
 
 router.get("/logout", auth, ctrUser.logout);
 

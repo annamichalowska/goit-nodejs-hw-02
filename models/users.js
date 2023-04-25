@@ -68,19 +68,21 @@ const login = async (req, res, next) => {
 };
 
 const auth = async (req, res, next) => {
-  const token = req.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  const user = await findUserByIdAndToken(decoded.userId, token);
   try {
+    const token = req.headers.authorization.split(" ")[1];
+    if (!token) return req.status(401).json({ message: "Not authorized" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await findUserByIdAndToken(decoded.userId, token);
+
     if (!user) {
       return res.status(401).json({ message: "Not authorized" });
     }
 
     req.user = user;
-    req.token = token;
     next();
   } catch (e) {
-    return res.status(401).json({ message: "Not autorized" });
+    next(e);
   }
 };
 
