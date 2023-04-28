@@ -59,7 +59,22 @@ const findUserByIdAndToken = async (userId, token) => {
 const findUserById = async (userId) => {
   const user = await User.findById({ _id: userId });
   return user;
-}
+};
+
+const getPaginationContacts = async ({ offset, limit }) => {
+  const contactsWithPagination = await contactList
+    .find()
+    .skip(offset)
+    .limit(limit);
+  return contactsWithPagination;
+};
+
+const getContactsByField = async (fieldName, fieldValue) => {
+  const query = {};
+  query[fieldName] = fieldValue;
+  const results = await contactList.find(query);
+  return results;
+};
 
 module.exports = {
   getAllContacts,
@@ -73,4 +88,6 @@ module.exports = {
   loginResponse,
   findUserByIdAndToken,
   findUserById,
+  getPaginationContacts,
+  getContactsByField,
 };

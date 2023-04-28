@@ -86,7 +86,7 @@ const auth = async (req, res, next) => {
   }
 };
 
-const logout = async (res, req, next) => {
+const logout = async (req, res, next) => {
   const userId = req.user.id;
   const user = await service.findUserById(userId);
 
@@ -106,7 +106,7 @@ const logout = async (res, req, next) => {
   }
 };
 
-const current = async (res, req, next) => {
+const current = async (req, res, next) => {
   const userId = req.user.id;
   const user = await service.findUserById(userId);
 
@@ -117,7 +117,7 @@ const current = async (res, req, next) => {
 
     res.status(200).json({
       email: user.email,
-      subscription: user.subsctiption,
+      subscription: user.subscription,
     });
   } catch (e) {
     console.error(e);
