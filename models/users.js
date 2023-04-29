@@ -125,10 +125,29 @@ const current = async (req, res, next) => {
   }
 };
 
+const subscription = async (req, res, next) => {
+  const { subscription } = req.body;
+  const userId = req.user.id;
+  const allowedSubscriptions = ["starter", "pro", "business"];
+  if (!allowedSubscriptions.includes(subscription)) {
+    return res.status(400).json({ message: "Invalid subscription type" });
+  }
+  try {
+    const user = await service.updateSubscriptionUser(userId, { subscription });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json({ user });
+  } catch (e) {
+    next(e);
+  }
+};
+
 module.exports = {
   signup,
   login,
   auth,
   logout,
   current,
+  subscription,
 };

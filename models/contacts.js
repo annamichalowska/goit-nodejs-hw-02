@@ -2,7 +2,19 @@ const service = require("../service");
 
 const get = async (req, res, next) => {
   try {
-    const results = await service.getAllContacts();
+    let results = await service.getAllContacts();
+
+    const { page, limit, favorite } = req.query;
+
+    if (favorite) {
+      const fav = favorite === 'true';
+      results = results.filter(contact => contact.favorite === fav);
+    }
+
+    if (page && limit) {
+      results = results.slice((page - 1) * limit, page * limit);
+    }
+
     res.json({
       status: "Database connection successful",
       code: 200,
@@ -135,48 +147,6 @@ const favorite = async (req, res, next) => {
   }
 };
 
-const pagination = async (req, res, next) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
-  const offset = (page - 1) * limit;
-  try {
-    const results = await service.getPaginationContacts({ offset, limit });
-    res.json({
-      status: "Database connection successful",
-      code: 200,
-      data: {
-        contacts: results,
-      },
-    });
-  } catch (e) {
-    console.error(e);
-    next(e);
-  }
-};
-
-const filter = async (req, res, next) => {
-  const favorite = req.query.favorite;
-  try {
-    let results;
-    if (favorite) {
-      results = await service.getContactsByField({ favorite });
-    } else {
-      results = await service.getAllContacts();
-    }
-
-    res.json({
-      status: "Database connection successful",
-      code: 200,
-      data: {
-        contacts: results,
-      },
-    });
-  } catch (e) {
-    console.error(e);
-    next(e);
-  }
-};
-
 module.exports = {
   get,
   getById,
@@ -184,6 +154,4 @@ module.exports = {
   update,
   remove,
   favorite,
-  pagination,
-  filter,
 };

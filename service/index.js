@@ -61,19 +61,9 @@ const findUserById = async (userId) => {
   return user;
 };
 
-const getPaginationContacts = async ({ offset, limit }) => {
-  const contactsWithPagination = await contactList
-    .find()
-    .skip(offset)
-    .limit(limit);
-  return contactsWithPagination;
-};
-
-const getContactsByField = async (fieldName, fieldValue) => {
-  const query = {};
-  query[fieldName] = fieldValue;
-  const results = await contactList.find(query);
-  return results;
+const updateSubscriptionUser = async (userId, { subscription }) => {
+  const user = await User.findByIdAndUpdate({ _id: userId }, { subscription });
+  return user;
 };
 
 module.exports = {
@@ -88,6 +78,5 @@ module.exports = {
   loginResponse,
   findUserByIdAndToken,
   findUserById,
-  getPaginationContacts,
-  getContactsByField,
+  updateSubscriptionUser,
 };
