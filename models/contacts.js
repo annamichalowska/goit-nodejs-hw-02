@@ -2,7 +2,19 @@ const service = require("../service");
 
 const get = async (req, res, next) => {
   try {
-    const results = await service.getAllContacts();
+    let results = await service.getAllContacts();
+
+    const { page, limit, favorite } = req.query;
+
+    if (favorite) {
+      const fav = favorite === 'true';
+      results = results.filter(contact => contact.favorite === fav);
+    }
+
+    if (page && limit) {
+      results = results.slice((page - 1) * limit, page * limit);
+    }
+
     res.json({
       status: "Database connection successful",
       code: 200,

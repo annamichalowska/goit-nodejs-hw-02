@@ -1,4 +1,5 @@
 const contactList = require("./schema/contact");
+const User = require("./schema/user");
 
 const getAllContacts = async () => {
   return contactList.find();
@@ -29,6 +30,42 @@ const updateStatusContact = (contactId, favorite) => {
   });
 };
 
+const existingUser = async (query) => {
+  const existingUser = await User.findOne(query);
+  return existingUser;
+};
+
+const saveNewUser = async (newUser) => {
+  const user = new User(newUser);
+  const savedUser = await user.save();
+  return savedUser;
+};
+
+const loginResponse = (res, token, email, subscription) => {
+  return res.status(200).json({
+    token,
+    user: {
+      email,
+      subscription,
+    },
+  });
+};
+
+const findUserByIdAndToken = async (userId, token) => {
+  const user = await User.findOne({ _id: userId, token: token });
+  return user;
+};
+
+const findUserById = async (userId) => {
+  const user = await User.findById({ _id: userId });
+  return user;
+};
+
+const updateSubscriptionUser = async (userId, { subscription }) => {
+  const user = await User.findByIdAndUpdate({ _id: userId }, { subscription });
+  return user;
+};
+
 module.exports = {
   getAllContacts,
   getContactById,
@@ -36,4 +73,10 @@ module.exports = {
   updateContact,
   removeContact,
   updateStatusContact,
+  existingUser,
+  saveNewUser,
+  loginResponse,
+  findUserByIdAndToken,
+  findUserById,
+  updateSubscriptionUser,
 };
