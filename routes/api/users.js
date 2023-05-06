@@ -13,4 +13,6 @@ router.get("/current", auth, ctrUser.current);
 
 router.patch("/", auth, ctrUser.subscription);
 
+router.patch("/avatars", auth, ctrUser.avatars);
+
 module.exports = router;

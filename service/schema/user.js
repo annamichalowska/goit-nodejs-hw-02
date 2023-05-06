@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const gravatar = require("gravatar");
 const Schema = mongoose.Schema;
 
 const userSchema = new Schema({
@@ -23,6 +24,12 @@ const userSchema = new Schema({
   owner: {
     type: Schema.Types.ObjectId,
     ref: "user",
+  },
+  avatarURL: {
+    type: String,
+    default: function () {
+      return gravatar.url(this.email, { s: "200", r: "pg", d: "mp" }, true);
+    },
   },
 });
 
