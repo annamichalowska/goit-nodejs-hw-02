@@ -163,7 +163,12 @@ const avatars = async (req, res, next) => {
     await image.writeAsync(file.path);
 
     const avatarName = file.filename;
-    const avatarPath = path.join(__dirname, "public", "avatars", avatarName);
+    const avatarPath = path.join(
+      process.cwd(),
+      "public",
+      "avatars",
+      avatarName
+    );
     await promisify(fs.rename)(file.path, avatarPath);
 
     const avatarURL = `/avatars/${avatarName}`;
@@ -174,7 +179,6 @@ const avatars = async (req, res, next) => {
   } catch (e) {
     console.error(e);
     res.status(500).json({ message: "Internal Server Error" });
-    next(e);
   }
 };
 

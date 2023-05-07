@@ -2,8 +2,9 @@ const express = require("express");
 const router = express.Router();
 const ctrUser = require("../../models/users");
 const { auth } = require("../../models/users");
+const upload = require("./../../utils/storage");
 
-router.post("/singup", ctrUser.signup);
+router.post("/signup", ctrUser.signup);
 
 router.post("/login", ctrUser.login);
 
@@ -13,6 +14,6 @@ router.get("/current", auth, ctrUser.current);
 
 router.patch("/", auth, ctrUser.subscription);
 
-router.patch("/avatars", auth, ctrUser.avatars);
+router.patch("/avatars", upload.single("avatar"), auth, ctrUser.avatars);
 
 module.exports = router;
