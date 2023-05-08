@@ -1,6 +1,11 @@
 const service = require("../service");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const gravatar = require("gravatar");
+const path = require("path");
+const fs = require("fs");
+const { promisify } = require("util");
+const jimp = require("jimp");
 const {
   existingUser,
   saveNewUser,
@@ -12,6 +17,7 @@ const { validateUser } = require("../service/validator");
 const signup = async (req, res, next) => {
   const { error } = validateUser(req.body);
   const { email } = req.body;
+  const avatarURL = gravatar.url(email, { s: "200", r: "pg", d: "mp" }, true);
 
   try {
     const result = await service.existingUser({ email });
@@ -31,6 +37,7 @@ const signup = async (req, res, next) => {
       user: {
         email: savedUser.email,
         subscription: savedUser.subscription,
+        avatarURL: savedUser.avatarURL,
       },
     });
   } catch (e) {
@@ -139,6 +146,42 @@ const subscription = async (req, res, next) => {
   }
 };
 
+const avatars = async (req, res, next) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ message: "No file provided" });
+    }
+
+    const image = await jimp.read(file.path);
+    image.resize(250, 250);
+    await image.writeAsync(file.path);
+
+    const avatarName = file.filename;
+    const avatarPath = path.join(
+      process.cwd(),
+      "public",
+      "avatars",
+      avatarName
+    );
+    await promisify(fs.rename)(file.path, avatarPath);
+
+    const avatarURL = `/avatars/${avatarName}`;
+    user.avatarURL = avatarURL;
+    await user.save();
+
+    res.status(200).json({ avatarURL });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   signup,
   login,
@@ -146,4 +189,5 @@ module.exports = {
   logout,
   current,
   subscription,
+  avatars,
 };

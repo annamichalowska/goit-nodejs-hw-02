@@ -7,8 +7,8 @@ const get = async (req, res, next) => {
     const { page, limit, favorite } = req.query;
 
     if (favorite) {
-      const fav = favorite === 'true';
-      results = results.filter(contact => contact.favorite === fav);
+      const fav = favorite === "true";
+      results = results.filter((contact) => contact.favorite === fav);
     }
 
     if (page && limit) {
