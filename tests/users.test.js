@@ -26,6 +26,15 @@ connection
 describe("registration controller testing", () => {
   test("registration controller testing", async () => {
     const response = await request(app)
+      .post("/api/users/signup")
+      .send({ email: "test@test.pl", password: "test123" });
+    expect(response.status).toBe(200);
+  }, 50000);
+});
+
+describe("login controller testing", () => {
+  test("login controller testing", async () => {
+    const response = await request(app)
       .post("/api/users/login")
       .send({ email: "test@test.pl", password: "test123" });
     expect(response.status).toBe(200);
