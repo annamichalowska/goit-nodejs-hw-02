@@ -31,6 +31,14 @@ const userSchema = new Schema({
       return gravatar.url(this.email, { s: "200", r: "pg", d: "mp" }, true);
     },
   },
+  verify: {
+    type: Boolean,
+    default: false,
+  },
+  verificationToken: {
+    type: String,
+    required: [true, "Verify token is required"],
+  },
 });
 
 const User = mongoose.model("user", userSchema);

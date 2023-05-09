@@ -66,6 +66,11 @@ const updateSubscriptionUser = async (userId, { subscription }) => {
   return user;
 };
 
+const findUserByToken = async (verificationToken) => {
+  const user = await User.findOne({ verificationToken: verificationToken });
+  return user;
+};
+
 module.exports = {
   getAllContacts,
   getContactById,
@@ -79,4 +84,5 @@ module.exports = {
   findUserByIdAndToken,
   findUserById,
   updateSubscriptionUser,
+  findUserByToken,
 };

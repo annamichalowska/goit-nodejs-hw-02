@@ -6,6 +6,8 @@ const path = require("path");
 const fs = require("fs");
 const { promisify } = require("util");
 const jimp = require("jimp");
+const nodemailer = require("nodemailer");
+const uuidv4 = require("uuid").v4;
 const {
   existingUser,
   saveNewUser,
@@ -33,6 +35,13 @@ const signup = async (req, res, next) => {
     };
     const savedUser = await saveNewUser(newUser);
 
+    const verificationToken = uuidv4();
+
+    savedUser.verificationToken = verificationToken;
+    await savedUser.save();
+
+    await sendVerificationEmail(savedUser.email, verificationToken);
+
     return res.status(201).json({
       user: {
         email: savedUser.email,
@@ -43,6 +52,27 @@ const signup = async (req, res, next) => {
   } catch (e) {
     res.status(404).json({ message: "Not found" });
   }
+};
+
+const sendVerificationEmail = async (email, verificationToken) => {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      type: "OAuth2",
+      user: "michalowska.aneczka@gmail.com",
+      accessToken: "process.env.GMAIL_TOKEN",
+    },
+  });
+  const verificationLink = `http://localhost:3000/users/verify/${verificationToken}`;
+
+  const mailOptions = {
+    from: "michalowska.aneczka@gmail.com",
+    to: email,
+    subject: "Email Verification",
+    test: `Please click the following link to verify your email: ${verificationLink}`,
+  };
+
+  await transporter.sendMail(mailOptions);
 };
 
 const login = async (req, res, next) => {
@@ -182,12 +212,35 @@ const avatars = async (req, res, next) => {
   }
 };
 
+const verify = async (req, res, next) => {
+  const { verificationToken } = req.params;
+
+  try {
+    const user = await service.findUserByToken(verificationToken);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.verificationToken = null;
+    user.verify = true;
+    await user.save();
+
+    return res.status(200).json({ message: "Verification successful" });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   signup,
+  sendVerificationEmail,
   login,
   auth,
   logout,
   current,
   subscription,
   avatars,
+  verify,
 };
