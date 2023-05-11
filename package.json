@@ -24,6 +24,8 @@
     "multer": "^1.4.5-lts.1",
     "nanoid": "^2.1.8",
     "nodemailer": "^6.9.1",
+    "nodemailer-smtp-transport": "^2.7.4",
+    "strapi-provider-email-nodemailer": "^3.6.11",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

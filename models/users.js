@@ -28,16 +28,15 @@ const signup = async (req, res, next) => {
     }
 
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    const verificationToken = uuidv4();
 
     const newUser = {
       email: req.body.email,
       password: hashedPassword,
+      verificationToken,
     };
+
     const savedUser = await saveNewUser(newUser);
-
-    const verificationToken = uuidv4();
-
-    savedUser.verificationToken = verificationToken;
     await savedUser.save();
 
     await sendVerificationEmail(savedUser.email, verificationToken);
@@ -50,23 +49,26 @@ const signup = async (req, res, next) => {
       },
     });
   } catch (e) {
+    console.error(e);
     res.status(404).json({ message: "Not found" });
   }
 };
 
 const sendVerificationEmail = async (email, verificationToken) => {
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.mailtrap.io",
+    port: 2525,
+    secure: false,
     auth: {
-      type: "OAuth2",
-      user: "michalowska.aneczka@gmail.com",
-      accessToken: "process.env.GMAIL_TOKEN",
+      user: "c7ab0a7b377b91",
+      pass: "6eb4105b8fc3d5",
     },
+    requireTLS: true,
   });
   const verificationLink = `http://localhost:3000/users/verify/${verificationToken}`;
 
   const mailOptions = {
-    from: "michalowska.aneczka@gmail.com",
+    from: "c7ab0a7b377b91",
     to: email,
     subject: "Email Verification",
     test: `Please click the following link to verify your email: ${verificationLink}`,
@@ -233,6 +235,40 @@ const verify = async (req, res, next) => {
   }
 };
 
+const verifyAgain = async (req, res, next) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Missing required field email" });
+  }
+
+  try {
+    const user = await service.existingUser({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.verify) {
+      return res
+        .status(400)
+        .json({ message: "Verification has already been passed" });
+    }
+
+    const verificationToken = uuidv4();
+
+    user.verificationToken = verificationToken;
+    await user.save();
+
+    await sendVerificationEmail(user.email, verificationToken);
+
+    return res.status(200).json({ message: "Verification email sent" });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   signup,
   sendVerificationEmail,
@@ -243,4 +279,5 @@ module.exports = {
   subscription,
   avatars,
   verify,
+  verifyAgain,
 };
