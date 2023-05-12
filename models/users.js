@@ -60,15 +60,16 @@ const sendVerificationEmail = async (email, verificationToken) => {
     port: 2525,
     secure: false,
     auth: {
-      user: "c7ab0a7b377b91",
-      pass: "6eb4105b8fc3d5",
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
     },
     requireTLS: true,
   });
+
   const verificationLink = `http://localhost:3000/users/verify/${verificationToken}`;
 
   const mailOptions = {
-    from: "c7ab0a7b377b91",
+    from: "AM",
     to: email,
     subject: "Email Verification",
     test: `Please click the following link to verify your email: ${verificationLink}`,
