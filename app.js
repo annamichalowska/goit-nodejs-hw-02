@@ -17,7 +17,7 @@ app.use("/api/contacts", contactsRouter);
 app.use("/api/users", usersRouter);
 
 app.use(express.static("public"));
-const port = 5555;
+const port = 3000;
 
 app.use((req, res) => {
   res.status(404).json({ message: "Not found" });

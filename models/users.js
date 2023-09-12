@@ -6,6 +6,8 @@ const path = require("path");
 const fs = require("fs");
 const { promisify } = require("util");
 const jimp = require("jimp");
+const nodemailer = require("nodemailer");
+const uuidv4 = require("uuid").v4;
 const {
   existingUser,
   saveNewUser,
@@ -26,12 +28,18 @@ const signup = async (req, res, next) => {
     }
 
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    const verificationToken = uuidv4();
 
     const newUser = {
       email: req.body.email,
       password: hashedPassword,
+      verificationToken,
     };
+
     const savedUser = await saveNewUser(newUser);
+    await savedUser.save();
+
+    await sendVerificationEmail(savedUser.email, verificationToken);
 
     return res.status(201).json({
       user: {
@@ -41,8 +49,33 @@ const signup = async (req, res, next) => {
       },
     });
   } catch (e) {
+    console.error(e);
     res.status(404).json({ message: "Not found" });
   }
+};
+
+const sendVerificationEmail = async (email, verificationToken) => {
+  const transporter = nodemailer.createTransport({
+    host: "smtp.mailtrap.io",
+    port: 2525,
+    secure: false,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+    requireTLS: true,
+  });
+
+  const verificationLink = `http://localhost:3000/users/verify/${verificationToken}`;
+
+  const mailOptions = {
+    from: "AM",
+    to: email,
+    subject: "Email Verification",
+    test: `Please click the following link to verify your email: ${verificationLink}`,
+  };
+
+  await transporter.sendMail(mailOptions);
 };
 
 const login = async (req, res, next) => {
@@ -182,12 +215,70 @@ const avatars = async (req, res, next) => {
   }
 };
 
+const verify = async (req, res, next) => {
+  const { verificationToken } = req.params;
+
+  try {
+    const user = await service.findUserByToken(verificationToken);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.verificationToken = null;
+    user.verify = true;
+    await user.save();
+
+    return res.status(200).json({ message: "Verification successful" });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const verifyAgain = async (req, res, next) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Missing required field email" });
+  }
+
+  try {
+    const user = await service.existingUser({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.verify) {
+      return res
+        .status(400)
+        .json({ message: "Verification has already been passed" });
+    }
+
+    const verificationToken = uuidv4();
+
+    user.verificationToken = verificationToken;
+    await user.save();
+
+    await sendVerificationEmail(user.email, verificationToken);
+
+    return res.status(200).json({ message: "Verification email sent" });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   signup,
+  sendVerificationEmail,
   login,
   auth,
   logout,
   current,
   subscription,
   avatars,
+  verify,
+  verifyAgain,
 };
